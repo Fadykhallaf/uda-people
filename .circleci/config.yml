@@ -39,11 +39,17 @@ commands:
             
 jobs:
   build-frontend:
-    <<: *defaults
+    docker:
+      - image: python:3.7-alpine3.11
     steps:
       - checkout
       - restore_cache:
           keys: [frontend-build]
+
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --update nodejs npm
       - run:
           name: Build front-end
           command: |
