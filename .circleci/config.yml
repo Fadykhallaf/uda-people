@@ -80,17 +80,18 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          keys: [test-frontend-v1]
+          keys: [test-front-v1]
       - run:
           name: Test Frontend
           command: |
-            cd frontend           
-            npm i
-            npm install jest
-            npm run test
+            cd frontend    
+            sudo npm i       
+            sudo npm update
+            sudo npm install jest
+            sudo npm run test
       - save_cache:
           paths: [frontend/node_modules]
-          key: test-frontend-v1
+          key: test-front-v1
                 
   test-backend:
     <<: *defaults
