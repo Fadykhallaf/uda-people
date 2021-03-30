@@ -85,10 +85,10 @@ jobs:
           name: Test Frontend
           command: |
             cd frontend    
-            sudo npm i       
-            sudo npm update
-            sudo npm install jest
-            sudo npm run test
+            npm i       
+            npm update
+            npm install jest
+            npm run test
       - save_cache:
           paths: [frontend/node_modules]
           key: test-front-v1
