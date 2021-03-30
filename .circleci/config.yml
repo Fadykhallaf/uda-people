@@ -80,16 +80,16 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          keys: [test-frontend]
+          keys: [test-frontend-v1]
       - run:
           name: Test Frontend
           command: |
             cd frontend           
-            sudo npm i
-            sudo npm run test
+            npm i
+            pm run test
       - save_cache:
           paths: [frontend/node_modules]
-          key: test-frontend
+          key: test-frontend-v1
                 
   test-backend:
     <<: *defaults
