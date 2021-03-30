@@ -40,26 +40,26 @@ commands:
 jobs:
   build-frontend:
     docker:
-      - image: python:3.7-alpine3.11
+      - image: circleci/node:13.8.0
     steps:
       - checkout
       - restore_cache:
-          keys: [frontend-build]
+          keys: [frontend-build-v1]
 
-      - run:
-          name: Install dependencies
-          command: |
-            apk add --update nodejs npm
+      # - run:
+      #     name: Install dependencies
+      #     command: |
+      #       apk add --update nodejs npm
       - run:
           name: Build front-end
           command: |
             cd frontend
             npm i
-            npm install webpack webpack-cli webpack-dev-server --save-dev
+            # npm install webpack webpack-cli webpack-dev-server --save-dev
             npm run build
       - save_cache:
           paths: [frontend/node_modules]
-          key: frontend-build
+          key: frontend-build-v1
 
   build-backend:
     <<: *defaults
