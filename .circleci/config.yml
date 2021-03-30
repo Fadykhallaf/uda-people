@@ -86,8 +86,8 @@ jobs:
           command: |
             cd frontend    
             npm i       
-            # npm update
-            # sudo npm install jest
+            npm update
+            sudo npm install jest
             npm run test
       - save_cache:
           paths: [frontend/node_modules]
