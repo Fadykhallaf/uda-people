@@ -248,38 +248,71 @@ jobs:
 
   deploy-frontend:
     <<: *defaults
+
     steps:
-      # Checkout code from git
+      - checkout
+      - restore_cache:
+          keys: [frontend-build-v1]
       - run:
           name: Install dependencies
           command: |
-            # your code here
+            sudo apt install python-pip jq curl
+            sudo pip install awscli
+            # sudo npm install -g webpack webpack-cli
+            # yum install -y nodejs npm tar gzip jq git
       - run:
-          name: Get backend url
+          name: Get backend 
           command: |
-            # your code here
+            BACKEND_IP=`curl -H "token: 2669c9d4-3f74-4218-86a9-9a88f26895b0" \
+              --request GET https://api.memstash.io/values/BACKEND_INSTANCE_IP_${CIRCLE_WORKFLOW_ID}`
             export API_URL="http://${BACKEND_IP}:3030"
             echo "${API_URL}"
+            cd frontend
+            npm i
+            npm run build
       - run:
           name: Deploy frontend objects
           command: |
-            # your code here
+            aws s3 cp ./frontend/dist s3://udapeople-${CIRCLE_WORKFLOW_ID}/ --recursive
       # Here's where you will add some code to rollback on failure      
                     
   deploy-backend:
-    <<: *defaults
+    docker:
+      - image: python:3.7-alpine3.11
     steps:
-      # Checkout code from git
-      # Add ssh keys with fingerprint
-      # attach workspace
+      - checkout
+      - add_ssh_keys:
+          fingerprints:
+            - "05:c8:10:53:ff:4b:80:4c:bc:c3:5d:51:e3:b9:93:a5"
       - run:
           name: Install dependencies
           command: |
-            # your code here
+            apk add --update ansible
+            apk add nodejs npm gzip tar git curl jq openssh-client
+            pip install awscli
+      
+      - attach_workspace:
+          at: ~/
+      
+      - run:
+          name: Build backend
+          command: |
+            echo ENVIROMENT=production> "backend/.env"
+            echo TYPEORM_CONNECTION=$TYPEORM_CONNECTION >> "backend/.env"
+            echo TYPEORM_ENTITIES=$TYPEORM_ENTITIES >> "backend/.env"
+            echo TYPEORM_HOST=$TYPEORM_HOST >> "backend/.env"
+            echo TYPEORM_PORT=$TYPEORM_PORT >> "backend/.env"
+            echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> "backend/.env"
+            echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> "backend/.env"
+            echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> "backend/.env"
+            tar cvzf artifact.tar.gz backend
+            cd backend
+      
       - run:
           name: Deploy backend
           command: |
-            # your code here
+            cd ~/project/.circleci/ansible
+            ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory.txt deploy-backend.yml
       # Here's where you will add some code to rollback on failure  
 
   smoke-test:
@@ -350,19 +383,19 @@ workflows:
       #     requires: [build-backend]
       # - scan-frontend:
       #     requires: [build-frontend]
-      # - deploy-infrastructure
+      - deploy-infrastructure
       #     requires: [test-frontend, test-backend, scan-frontend, scan-backend]
       #     filters:
       #       branches:
       #         only: [test-feature-branch]
-      # - configure-infrastructure:
-      #     requires: [deploy-infrastructure]
+      - configure-infrastructure:
+          requires: [deploy-infrastructure]
       - run-migrations
           # requires: [configure-infrastructure]
-      # - deploy-frontend:
-      #     requires: [run-migrations]
-      # - deploy-backend:
-      #     requires: [run-migrations]
+      - deploy-frontend:
+          requires: [run-migrations]
+      - deploy-backend:
+          requires: [run-migrations]
       # - smoke-test:
       #     requires: [deploy-backend, deploy-frontend]
       # - cloudfront-update:
