@@ -386,7 +386,7 @@ jobs:
       - revert-migrations  
       - slack-failure-notification
 
-cleanup:
+  cleanup:
     docker:
       - image: amazon/aws-cli:latest
     steps:
