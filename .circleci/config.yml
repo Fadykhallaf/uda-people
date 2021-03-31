@@ -417,16 +417,34 @@ cleanup:
 workflows:
   default:
     jobs:
-      # - build-frontend
-      # - build-backend
-      # - test-frontend:
-      #     requires: [build-frontend]
-      # - test-backend:
-      #     requires: [build-backend]
-      # - scan-backend:
-      #     requires: [build-backend]
-      # - scan-frontend:
-      #     requires: [build-frontend]
+      - build-frontend:
+          filters:
+            branches:
+              only: [uda-dev]
+      - build-backend:
+          filters:
+            branches:
+              only: [uda-dev]
+      - test-frontend:
+          requires: [build-frontend]
+          filters:
+            branches:
+              only: [uda-dev]
+      - test-backend:
+          requires: [build-backend]
+          filters:
+            branches:
+              only: [uda-dev]
+      - scan-backend:
+          requires: [build-backend]
+          filters:
+            branches:
+              only: [uda-dev]
+      - scan-frontend:
+          requires: [build-frontend]
+          filters:
+            branches:
+              only: [uda-dev]
       # - deploy-infrastructure
       #     requires: [test-frontend, test-backend, scan-frontend, scan-backend]
       #     filters:
@@ -440,7 +458,7 @@ workflows:
           # requires: [run-migrations]
       # - deploy-backend:
           # requires: [run-migrations]
-      - smoke-test
+      # - smoke-test:
       #     requires: [deploy-backend, deploy-frontend]
       # - cloudfront-update:
       #     requires: [smoke-test]
