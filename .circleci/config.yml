@@ -181,37 +181,67 @@ jobs:
       # Here's where you will add some code to rollback on failure      
 
   configure-infrastructure:
-    <<: *defaults
+    docker:
+      - image: python:3.7-alpine3.11
     steps:
-      # Checkout code from git
-      # Add ssh keys with fingerprint
-      # attach workspace
+      - checkout
+      - add_ssh_keys:
+          fingerprints:
+            - "05:c8:10:53:ff:4b:80:4c:bc:c3:5d:51:e3:b9:93:a5"
+      
+      - attach_workspace:
+          at: ~/
+
       - run:
           name: Install dependencies
           command: |
-            # Your code here
-            exit 1
+            apk add --update ansible jq curl
+            pip install awscli
       - run:
           name: Configure server
           command: |
-            # Your code here
-            exit 1
+            cd ~/project/.circleci/ansible
+            ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory.txt configure-server.yml
+      
+      - run:
+          name: setup prometheus node exporter
+          command: |
+            cd ~/project/.circleci/ansible
+            ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory.txt configure-node-exporter.yml
       # Here's where you will add some code to rollback on failure      
 
   run-migrations:
     <<: *defaults
+
     steps:
-      # Checkout code from git
+      - checkout
       - run:
           name: Run migrations
           command: |
-            # Your code here
-            exit 1
+            sudo apt install python-pip jq curl
+            sudo pip install awscli
+            echo printenv
+            printenv >> ./backend/.env
+            cd backend
+            npm i
+            # npm audit fix --audit-level=critical 
+            # npm fund 
+            npm run migrations >> migrations-output.txt
+            cat migrations-output.txt
+            pwd
       - run:
           name: Send migration results to memstash
           command: |
-            # Your code here
-            exit 1
+            cd backend
+            echo before
+            MIGRATION_NUM=$(grep -c "No migrations are pending" migrations-output.txt)
+            echo $MIGRATION_NUM
+            echo after
+            curl -H "Content-Type: text/plain" \
+              -H "token: 99934756-ea04-49e9-8022-8e5912911962" \
+              --request PUT \
+              --data "${MIGRATION_NUM}" \
+              https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID}
      # Here's where you will add some code to rollback on failure      
 
   deploy-frontend:
@@ -323,10 +353,10 @@ workflows:
       #     filters:
       #       branches:
       #         only: [test-feature-branch]
-      # - configure-infrastructure:
-      #     requires: [deploy-infrastructure]
-      # - run-migrations:
-      #     requires: [configure-infrastructure]
+      - configure-infrastructure:
+          requires: [deploy-infrastructure]
+      - run-migrations:
+          requires: [configure-infrastructure]
       # - deploy-frontend:
       #     requires: [run-migrations]
       # - deploy-backend:
