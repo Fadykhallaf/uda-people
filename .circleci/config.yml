@@ -345,12 +345,12 @@ jobs:
           command: |
             apk add --update curl nodejs npm jq
             pip install awscli
-      # - run:
-      #     name: Get backend url && backend smoke test
-      #     command: |
-      #       BACKEND_IP=`curl -H "token: 2669c9d4-3f74-4218-86a9-9a88f26895b0" \
-      #         --request GET https://api.memstash.io/values/BACKEND_INSTANCE_IP_${CIRCLE_WORKFLOW_ID}`
-      #       curl "http://${BACKEND_IP}:3030/api/status" 
+      - run:
+          name: Get backend url && backend smoke test
+          command: |
+            BACKEND_IP=`curl -H "token: 2669c9d4-3f74-4218-86a9-9a88f26895b0" \
+              --request GET https://api.memstash.io/values/BACKEND_INSTANCE_IP_${CIRCLE_WORKFLOW_ID}`
+            curl "http://${BACKEND_IP}:3030/api/status" 
       - run:
           name: Frontend smoke test.
           command: |
@@ -361,8 +361,8 @@ jobs:
             else
               return 1
             fi
-      # - destroy-environment
-      # - revert-migrations
+      - destroy-environment
+      - revert-migrations
       - slack-failure-notification        
 
   cloudfront-update:
